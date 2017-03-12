@@ -40,31 +40,26 @@ int onebyte_release(struct inode *inode, struct file *filep)
 ssize_t onebyte_read(struct file *filep, char *buf, size_t count, loff_t *f_pos)
 {
 /*please complete the function on your own*/
-	int bytes_read = 0;
-	//Put the data into buffer
-	while(count){
-		//buf (buffer) is in user data segment, not kernel segment.
-		//Therefore, have to copy data from kernel data segment to user data segment. That's why we 
-		//need asm/uaccess.h <-- inside asm/uaccess.h have put_user which does this function!
-		put_user(*(onebyte_data++), buf++); //Reading onebyte_data and place it into buf
-		count--; //The length of data will be reduced
-		bytes_read++; //The number of byte read will increase
-		if(bytes_read == 1){ //But I only need 1 byte to be read
-			return 0; //So jump out after that
-		}
+	if(*f_pos == 0){
+		copy_to_user(buf, onebyte_data, 1);
+		*f_pos++;
+		return 1;
+	}
+	else if(*f_pos > 0){
+		return 0;
 	}
 }
 ssize_t onebyte_write(struct file *filep, const char *buf, size_t count, loff_t *f_pos)
 {
 /*please complete the function on your own*/
-	//With the data in buffer, the first byte will be copied from user space
-	//The function used is copy_from_user which is from uaccess.h
-	int bytes_write = 0;
-	copy_from_user(*(onebyte_data++), buf++,1);
-	if(count > 1){
-		printk(KERN_ALERT "ERROR!");
+	if(*f_pos == 0){
+		copy_from_user(onebyte_data, buf, 1);
+		*f_pos++;
+		return 1;
 	}
-	return 0;
+	else if(*f_pos > 0){
+		return -ENOSPC;
+	}
 }
 static int onebyte_init(void)
 {
@@ -93,9 +88,9 @@ static void onebyte_exit(void)
 {
 	// if the pointer is pointing to something
 	if (onebyte_data) {
-	// free the memory and assign the pointer to NULL
-	kfree(onebyte_data);
-	onebyte_data = NULL;
+		// free the memory and assign the pointer to NULL
+		kfree(onebyte_data);
+		onebyte_data = NULL;
 	}
 	// unregister the device
 	unregister_chrdev(MAJOR_NUMBER, "onebyte");
