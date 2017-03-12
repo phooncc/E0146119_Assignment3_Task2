@@ -1,4 +1,4 @@
-#include <linux/module.h> //Testing my first commit
+#include <linux/module.h> 
 #include <linux/kernel.h>
 #include <linux/init.h>
 #include <linux/slab.h>
@@ -40,6 +40,19 @@ int onebyte_release(struct inode *inode, struct file *filep)
 ssize_t onebyte_read(struct file *filep, char *buf, size_t count, loff_t *f_pos)
 {
 /*please complete the function on your own*/
+	int bytes_read = 0;
+	//Put the data into buffer
+	while(count){
+		//buf (buffer) is in user data segment, not kernel segment.
+		//Therefore, have to copy data from kernel data segment to user data segment. That's why we 
+		//need asm/uaccess.h <-- inside asm/uaccess.h have put_user which does this function!
+		put_user(*(onebyte_data++), buf++); //Reading onebyte_data and place it into buf
+		count--; //The length of data will be reduced
+		bytes_read++; //The number of byte read will increase
+		if(bytes_read == 1){ //But I only need 1 byte to be read
+			return 0; //So jump out after that
+		}
+	}
 }
 ssize_t onebyte_write(struct file *filep, const char *buf, size_t count, loff_t *f_pos)
 {
