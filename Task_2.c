@@ -41,13 +41,14 @@ ssize_t onebyte_read(struct file *filep, char *buf, size_t count, loff_t *f_pos)
 {
 /*please complete the function on your own*/
 	if(*f_pos == 0){
-		copy_to_user(buf, onebyte_data, 1);
-		*f_pos++;
-		return 1;
+		copy_to_user(buf,onebyte_data,1);
+		*f_pos = *f_pos + 1;
+		return 1;	
 	}
 	else if(*f_pos > 0){
 		return 0;
 	}
+	return 0;
 }
 ssize_t onebyte_write(struct file *filep, const char *buf, size_t count, loff_t *f_pos)
 {
@@ -77,7 +78,7 @@ static int onebyte_init(void)
 		onebyte_exit();
 	// cannot allocate memory
 	// return no memory error, negative signify a failure
-	return -ENOMEM;
+		return -ENOMEM;
 	}
 	// initialize the value to be X
 	*onebyte_data = 'X';
@@ -99,3 +100,4 @@ static void onebyte_exit(void)
 MODULE_LICENSE("GPL");
 module_init(onebyte_init);
 module_exit(onebyte_exit);
+
